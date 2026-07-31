@@ -33,9 +33,8 @@ The normal HTML workflow runs first:
 
 Screenshot mode then runs these steps:
 
-1. Resolve the cached pinned Chrome build.
-2. Download Chrome when the cache remains empty.
-3. Open generated HTML using headless Chrome.
+1. Resolve an installed Chrome or Chromium browser.
+2. Open generated HTML using the headless browser.
 4. Wait for Markdeep and layout readiness.
 5. Require exactly one rendered long TOC.
 6. Capture only that TOC element.
@@ -67,8 +66,8 @@ Normal rendering keeps the current footer unchanged.
 
 `src/screenshot.js` owns screenshot behavior:
 
-- Dynamically load Puppeteer Core.
-- Resolve or install pinned Chrome.
+- Dynamically load Playwright Core.
+- Resolve an installed Chrome or Chromium browser.
 - Launch a fresh headless browser profile.
 - Wait for rendering readiness.
 - Validate the TOC selection.
@@ -81,18 +80,15 @@ It wraps the selected native clipboard dependency.
 The boundary remains injectable during automated tests.
 
 No separate browser abstraction is required.
-Browser installation belongs inside screenshot behavior.
+Set `TOC_BROWSER_PATH` when automatic system-browser discovery cannot find the executable.
 
 ## Dependencies
 
-Use `puppeteer-core` for browser automation.
-It does not download Chrome during package installation.
+Use `playwright-core` for browser automation.
+It does not download browsers during package installation.
 
-Use Puppeteer's browser installer for lazy downloads.
-Pin Node.js 20-compatible package versions together.
-
-Pin one compatible Chrome-for-Testing build.
-Store that build within Puppeteer's user cache.
+Use an installed Chrome or Chromium browser.
+Set `TOC_BROWSER_PATH` when automatic discovery cannot find it.
 
 Use `@mariozechner/clipboard` for image clipboard writes.
 It provides native binaries for supported desktop targets.
@@ -118,7 +114,7 @@ Headless capture waits for these conditions:
 Use animation frames for bounding-box checks.
 Disable animations and transitions before capture.
 
-Use Puppeteer's element screenshot operation.
+Use Playwright's element screenshot operation.
 Do not crop a full-page screenshot manually.
 
 Rendering receives a thirty-second timeout.
@@ -176,7 +172,7 @@ Existing default-browser failures remain unchanged.
 
 These screenshot failures return exit code `1`:
 
-- Chrome download or launch failure.
+- Browser resolution or launch failure.
 - Markdeep rendering timeout.
 - Missing or duplicate TOC elements.
 - Unstable or invalid TOC dimensions.
@@ -203,8 +199,7 @@ Close headless browser resources immediately after capture.
 Markdeep remains remote and mutable.
 Screenshot mode therefore still requires network access.
 
-Chrome downloads add supply-chain and storage costs.
-Pin browser builds and verify download integrity.
+System browser updates remain the host's responsibility.
 
 ## Testing
 
@@ -233,7 +228,7 @@ Browser integration tests cover:
 Integration tests use local rendering fixtures.
 Routine tests never require remote Markdeep.
 
-Run browser tests across existing platform CI.
+Set `TOC_BROWSER_PATH` for browser-test CI jobs.
 Mock clipboard behavior during normal CI runs.
 
 Keep real clipboard tests opt-in.
@@ -248,9 +243,9 @@ Existing command lines require no changes.
 Existing successful stdout remains one HTML path.
 
 Only flagged commands produce two output paths.
-Only flagged commands download or launch headless Chrome.
+Only flagged commands launch the headless system browser.
 
-Document first-run browser download size and latency.
+Document the system-browser requirement and `TOC_BROWSER_PATH` fallback.
 Document desktop clipboard requirements and fallback behavior.
 
 No generated file migration is required.
@@ -283,7 +278,7 @@ Temporary files remain intentionally unmanaged.
 
 ## Verified References
 
-- Puppeteer supports element-specific screenshots.
-- Puppeteer Core avoids installation-time Chrome downloads.
+- Playwright supports element-specific screenshots.
+- Playwright Core supports a configured system-browser executable.
 - Markdeep 1.20 contains `.longTOC` styling.
 - Markdeep 1.20 exposes no `onLoad` option.

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { captureTocScreenshot, PUPPETEER_CACHE_DIR, resetBrowserResolution } from '../src/screenshot.js';
+import { captureTocScreenshot, resolveBrowser } from '../src/screenshot.js';
 
 function fakePage({ count = 1, boxes = [{ x: 0, y: 0, width: 100, height: 40 }, { x: 0, y: 0, width: 100, height: 40 }] } = {}) {
   let frame = 0;
@@ -10,9 +10,10 @@ function fakePage({ count = 1, boxes = [{ x: 0, y: 0, width: 100, height: 40 }, 
   };
   return {
     async setContent() {},
-    async waitForFunction(fn, options) {
+    async waitForFunction(fn, arg, options) {
       assert.equal(options.timeout, 30_000);
       assert.equal(typeof fn, 'function');
+      assert.equal(arg, undefined);
     },
     async evaluate(fn) {
       assert.equal(typeof fn, 'function');
@@ -42,6 +43,7 @@ test('waits for readiness, selects one stable TOC, disables motion, and returns 
   assert.deepEqual(bytes, Buffer.from('PNG'));
   assert.equal(launchOptions.executablePath, '/chrome');
   assert.equal(launchOptions.headless, true);
+  assert.equal(launchOptions.chromiumSandbox, true);
   assert.ok(!launchOptions.args?.includes('--no-sandbox'));
   assert.equal(wasClosed(), true);
 });
@@ -69,18 +71,21 @@ test('preserves the primary capture failure when cleanup also fails', async () =
   );
 });
 
-test('browser resolution installs once and then uses the cache', async () => {
-  resetBrowserResolution();
-  let installs = 0;
-  let executableOptions;
-  let installOptions;
-  const options = {
-    install: async received => { installs += 1; installOptions = received; },
-    executablePath: received => { executableOptions = received; return '/cached-chrome'; },
-  };
-  assert.equal(await (await import('../src/screenshot.js')).resolveBrowser(options), '/cached-chrome');
-  assert.equal(await (await import('../src/screenshot.js')).resolveBrowser(options), '/cached-chrome');
-  assert.equal(installs, 1);
-  assert.deepEqual(executableOptions, { browser: 'chrome', buildId: '128.0.6613.119', cacheDir: PUPPETEER_CACHE_DIR });
-  assert.deepEqual(installOptions, { browser: 'chrome', buildId: '128.0.6613.119', cacheDir: PUPPETEER_CACHE_DIR });
+test('browser resolution uses an explicitly configured system browser', async () => {
+  assert.equal(await resolveBrowser({ executablePath: '/usr/bin/chromium' }), '/usr/bin/chromium');
+});
+
+test('browser resolution detects an executable system browser', async () => {
+  const browser = await resolveBrowser({
+    browserPaths: ['/missing-browser', '/usr/bin/chromium'],
+    isExecutable: async path => path === '/usr/bin/chromium',
+  });
+  assert.equal(browser, '/usr/bin/chromium');
+});
+
+test('browser resolution rejects when no system browser is available', async () => {
+  await assert.rejects(
+    resolveBrowser({ browserPaths: [], env: {} }),
+    /TOC_BROWSER_PATH/i,
+  );
 });

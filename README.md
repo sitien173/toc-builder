@@ -72,13 +72,14 @@ Screenshot mode prints two absolute paths, in order:
 Both files use the same UUID, are created directly in the system temporary
 directory with exclusive creation, and are intentionally retained after
 success or later screenshot failures. The HTML is opened first; screenshot
-capture does not start if opening the HTML fails. The first screenshot run may
-download the pinned Chrome-for-Testing build into Puppeteer's cache.
+capture does not start if opening the HTML fails. Screenshot mode uses an
+installed Chrome or Chromium browser. Set `TOC_BROWSER_PATH` when automatic
+discovery cannot find its executable.
 
 Clipboard support requires a desktop Windows, macOS, or Linux session (Linux
 needs an active X11 or Wayland compositor). Clipboard failures are warning-only:
 the PNG remains available and the command still succeeds. Screenshot capture,
-Chrome, and PNG-write failures return exit code 1; invalid arguments return 2.
+browser, and PNG-write failures return exit code 1; invalid arguments return 2.
 
 An explicit real-clipboard smoke test is available with
 `npm run test:clipboard-smoke`. It is excluded from `npm test` and CI, requires
@@ -124,8 +125,8 @@ The default template is equivalent to:
 If the browser cannot be launched, the generated HTML is retained and its path
 is printed so it can be opened manually. For screenshot troubleshooting, first
 open the retained HTML path and verify internet access and that exactly one long
-TOC is rendered. If Chrome installation fails, retry with network access and
-check the Puppeteer cache permissions. On headless Linux, use the regular HTML
+TOC is rendered. If no browser is found, install Chrome or Chromium, or set
+`TOC_BROWSER_PATH` to its executable. On headless Linux, use the regular HTML
 mode or provide a desktop X11/Wayland session for clipboard support.
 
 Invalid arguments return exit code 2; file, template, rendering, writing, and

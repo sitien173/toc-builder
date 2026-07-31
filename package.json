@@ -1,6 +1,6 @@
 {
   "name": "toc-builder",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Generate temporary Markdeep HTML table-of-contents views for Markdown files.",
   "type": "module",
   "files": [
@@ -22,8 +22,7 @@
   },
   "dependencies": {
     "@mariozechner/clipboard": "0.3.9",
-    "@puppeteer/browsers": "2.10.6",
     "open": "^11.0.0",
-    "puppeteer-core": "24.16.0"
+    "playwright-core": "1.62.1"
   }
 }

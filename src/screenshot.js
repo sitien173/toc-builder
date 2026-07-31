@@ -1,47 +1,38 @@
-import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { constants } from 'node:fs';
+import { access } from 'node:fs/promises';
 
-const CHROME_BUILD_ID = '128.0.6613.119';
-const PUPPETEER_CACHE_DIR = join(homedir(), '.cache', 'puppeteer');
 const READY_TIMEOUT = 30_000;
-let browserResolution;
 
 async function defaultDependencies() {
-  const [{ launch }, browsers] = await Promise.all([
-    import('puppeteer-core'),
-    import('@puppeteer/browsers'),
-  ]);
-  return { launch, install: browsers.install, executablePath: browsers.computeExecutablePath };
+  const { chromium } = await import('playwright-core');
+  return { launch: chromium.launch.bind(chromium) };
 }
 
-export function resetBrowserResolution() {
-  browserResolution = undefined;
-}
-
-export async function resolveBrowser(overrides = {}) {
-  if (!browserResolution) {
-    browserResolution = (async () => {
-      const dependencies = { ...(await defaultDependencies()), ...overrides };
-      const executablePath = dependencies.executablePath({
-        browser: 'chrome',
-        buildId: CHROME_BUILD_ID,
-        cacheDir: PUPPETEER_CACHE_DIR,
-      });
-      try {
-        await dependencies.install({
-          browser: 'chrome',
-          buildId: CHROME_BUILD_ID,
-          cacheDir: PUPPETEER_CACHE_DIR,
-        });
-      } catch (error) {
-        // Installation can report an existing cached build as a failure; the
-        // executable path remains the authoritative cache lookup.
-        if (!executablePath) throw error;
-      }
-      return executablePath;
-    })();
+function defaultBrowserPaths(platform, env) {
+  if (platform === 'darwin') {
+    return [
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    ];
   }
-  return browserResolution;
+  if (platform === 'win32') {
+    return [env.PROGRAMFILES, env['PROGRAMFILES(X86)'], env.LOCALAPPDATA]
+      .filter(Boolean)
+      .map(directory => `${directory}\\Google\\Chrome\\Application\\chrome.exe`);
+  }
+  return ['/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'];
+}
+
+export async function resolveBrowser({ executablePath, browserPaths, env = process.env, isExecutable } = {}) {
+  if (executablePath ?? env.TOC_BROWSER_PATH) {
+    return executablePath ?? env.TOC_BROWSER_PATH;
+  }
+  const candidates = browserPaths ?? defaultBrowserPaths(process.platform, env);
+  const canExecute = isExecutable ?? (path => access(path, constants.X_OK).then(() => true, () => false));
+  for (const candidate of candidates) {
+    if (await canExecute(candidate)) return candidate;
+  }
+  throw new Error('No system browser found. Install Chrome or Chromium, or set TOC_BROWSER_PATH.');
 }
 
 async function disableMotion(page) {
@@ -60,6 +51,7 @@ export async function captureTocScreenshot(html, options = {}) {
   const browser = await dependencies.launch({
     executablePath,
     headless: true,
+    chromiumSandbox: true,
     args: [],
   });
 
@@ -72,6 +64,7 @@ export async function captureTocScreenshot(html, options = {}) {
         await document.fonts.ready;
         return document.documentElement.dataset.tocBuilderReady === 'true';
       },
+      undefined,
       { timeout: READY_TIMEOUT },
     );
     const elements = await page.$$('.longTOC');
@@ -100,4 +93,4 @@ export async function captureTocScreenshot(html, options = {}) {
   }
 }
 
-export { CHROME_BUILD_ID, PUPPETEER_CACHE_DIR, READY_TIMEOUT };
+export { READY_TIMEOUT };
