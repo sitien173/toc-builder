@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { captureTocScreenshot, resetBrowserResolution } from '../src/screenshot.js';
+import { captureTocScreenshot, PUPPETEER_CACHE_DIR, resetBrowserResolution } from '../src/screenshot.js';
 
 function fakePage({ count = 1, boxes = [{ x: 0, y: 0, width: 100, height: 40 }, { x: 0, y: 0, width: 100, height: 40 }] } = {}) {
   let frame = 0;
@@ -72,11 +72,15 @@ test('preserves the primary capture failure when cleanup also fails', async () =
 test('browser resolution installs once and then uses the cache', async () => {
   resetBrowserResolution();
   let installs = 0;
+  let executableOptions;
+  let installOptions;
   const options = {
-    install: async () => { installs += 1; },
-    executablePath: () => '/cached-chrome',
+    install: async received => { installs += 1; installOptions = received; },
+    executablePath: received => { executableOptions = received; return '/cached-chrome'; },
   };
   assert.equal(await (await import('../src/screenshot.js')).resolveBrowser(options), '/cached-chrome');
   assert.equal(await (await import('../src/screenshot.js')).resolveBrowser(options), '/cached-chrome');
   assert.equal(installs, 1);
+  assert.deepEqual(executableOptions, { browser: 'chrome', buildId: '128.0.6613.119', cacheDir: PUPPETEER_CACHE_DIR });
+  assert.deepEqual(installOptions, { browser: 'chrome', buildId: '128.0.6613.119', cacheDir: PUPPETEER_CACHE_DIR });
 });

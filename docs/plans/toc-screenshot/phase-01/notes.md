@@ -80,3 +80,23 @@
 
 ### Test evidence
 - RED -> GREEN: `node --test test/render.test.js test/screenshot.test.js` passes 11/11; `npm test` passes 20/20. Tests use fakes and perform no Chrome download, Markdeep access, filesystem output, or clipboard access.
+
+## Fix — Cache Directory
+
+### Decisions made
+- Use the deterministic per-user Puppeteer cache path `join(homedir(), '.cache', 'puppeteer')` for both executable resolution and browser installation.
+
+### Spec deviations
+- none
+
+### Tradeoffs accepted
+- none
+
+### Assumptions
+- The user home directory is stable for the lifetime of a process and is the intended Puppeteer cache root.
+
+### Follow-ups for human
+- none
+
+### Test evidence
+- RED -> GREEN: the new cache-directory assertion initially failed because `PUPPETEER_CACHE_DIR` was absent; all requested screenshot, focused render, and full test commands now pass.

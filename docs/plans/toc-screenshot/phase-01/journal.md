@@ -38,6 +38,27 @@ None
 ## NEXT
 TASK_COMPLETE
 
+# EXTERNAL RESPONSE
+## META
+- Phase 1 fix / 2026-07-31T17:32:00+07:00 / 2026-07-31T17:37:44+07:00 / docs/plans/toc-screenshot
+## SUMMARY
+Fixed browser resolution and installation to pass one deterministic Puppeteer cache directory.
+## FILES MODIFIED
+| Action | Path | Change |
+|---|---|---|
+| Modify | src/screenshot.js | Added deterministic cache directory to `computeExecutablePath` and `install`. |
+| Modify | test/screenshot.test.js | Asserted both browser boundaries receive the cache directory. |
+| Modify | docs/plans/toc-screenshot/phase-01/notes.md | Recorded RED-to-GREEN fix evidence. |
+| Modify | docs/plans/toc-screenshot/phase-01/journal.md | Recorded this fix response. |
+## NOTES
+- phase-01/notes.md (## Fix — Cache Directory)
+## SPEC COMPLIANCE
+- Meets Spec? YES — all requested verification commands pass.
+## CLARIFICATIONS NEEDED
+None
+## NEXT
+TASK_COMPLETE
+
 ## Quality Review
 
 ## Review Result

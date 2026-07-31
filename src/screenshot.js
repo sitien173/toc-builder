@@ -1,4 +1,8 @@
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+
 const CHROME_BUILD_ID = '128.0.6613.119';
+const PUPPETEER_CACHE_DIR = join(homedir(), '.cache', 'puppeteer');
 const READY_TIMEOUT = 30_000;
 let browserResolution;
 
@@ -21,9 +25,14 @@ export async function resolveBrowser(overrides = {}) {
       const executablePath = dependencies.executablePath({
         browser: 'chrome',
         buildId: CHROME_BUILD_ID,
+        cacheDir: PUPPETEER_CACHE_DIR,
       });
       try {
-        await dependencies.install({ browser: 'chrome', buildId: CHROME_BUILD_ID });
+        await dependencies.install({
+          browser: 'chrome',
+          buildId: CHROME_BUILD_ID,
+          cacheDir: PUPPETEER_CACHE_DIR,
+        });
       } catch (error) {
         // Installation can report an existing cached build as a failure; the
         // executable path remains the authoritative cache lookup.
@@ -91,4 +100,4 @@ export async function captureTocScreenshot(html, options = {}) {
   }
 }
 
-export { CHROME_BUILD_ID, READY_TIMEOUT };
+export { CHROME_BUILD_ID, PUPPETEER_CACHE_DIR, READY_TIMEOUT };
