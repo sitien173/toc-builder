@@ -41,6 +41,45 @@ The file is created directly inside the operating system's temporary directory
 and is intentionally retained. You can open the printed path manually or
 remove it when you no longer need it.
 
+## Screenshots
+
+Add `--screenshot` to capture the rendered `.longTOC` element and copy its PNG
+to the desktop clipboard:
+
+```sh
+toc README.md --screenshot
+toc README.md --template docs-template.html --screenshot
+```
+
+Screenshot mode prints two absolute paths, in order:
+
+```text
+<uuid>_README.md.html
+<uuid>_README.md.toc.png
+```
+
+Both files use the same UUID, are created directly in the system temporary
+directory with exclusive creation, and are intentionally retained after
+success or later screenshot failures. The HTML is opened first; screenshot
+capture does not start if opening the HTML fails. The first screenshot run may
+download the pinned Chrome-for-Testing build into Puppeteer's cache.
+
+Clipboard support requires a desktop Windows, macOS, or Linux session (Linux
+needs an active X11 or Wayland compositor). Clipboard failures are warning-only:
+the PNG remains available and the command still succeeds. Screenshot capture,
+Chrome, and PNG-write failures return exit code 1; invalid arguments return 2.
+
+An explicit real-clipboard smoke test is available with
+`npm run test:clipboard-smoke`. It is excluded from `npm test` and CI, requires
+an active desktop clipboard session, and mutates the real desktop clipboard;
+run it only when that side effect is intentional.
+
+Markdown and templates are trusted content. Screenshot mode executes that
+content in both the default browser and a second headless browser, so scripts
+with side effects can run twice. Do not use screenshot mode for untrusted
+files. Markdeep remains remote and mutable; compatibility can change when its
+`latest` build changes.
+
 ## Templates
 
 Templates are complete HTML documents. A custom template must:
@@ -72,9 +111,15 @@ The default template is equivalent to:
 ## Troubleshooting and security
 
 If the browser cannot be launched, the generated HTML is retained and its path
-is printed so it can be opened manually. Invalid arguments return exit code 2;
-file, template, rendering, writing, and browser failures return exit code 1.
-Errors are concise and do not include stack traces.
+is printed so it can be opened manually. For screenshot troubleshooting, first
+open the retained HTML path and verify internet access and that exactly one long
+TOC is rendered. If Chrome installation fails, retry with network access and
+check the Puppeteer cache permissions. On headless Linux, use the regular HTML
+mode or provide a desktop X11/Wayland session for clipboard support.
+
+Invalid arguments return exit code 2; file, template, rendering, writing, and
+browser failures return exit code 1. Clipboard failures only warn. Errors are
+concise and do not include stack traces.
 
 Markdeep is loaded from the remote URL
 `https://morgan3d.github.io/markdeep/latest/markdeep.min.js`, so viewing

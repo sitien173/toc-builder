@@ -15,7 +15,10 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test test/cli.test.js test/clipboard.test.js test/render.test.js test/screenshot.test.js",
+    "test:screenshot-integration": "node --test test/screenshot.browser.js",
+    "test:markdeep-canary": "node --test test/markdeep.canary.js",
+    "test:clipboard-smoke": "node --input-type=module -e \"import('./src/clipboard.js').then(({ copyImage }) => copyImage(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')))\""
   },
   "dependencies": {
     "@mariozechner/clipboard": "0.3.9",
