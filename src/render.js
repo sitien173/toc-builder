@@ -3,6 +3,7 @@ const OPEN_BODY_RE = /<body(?:\s[^>]*)?>/gi;
 const CLOSE_BODY_RE = /<\/body\s*>/gi;
 
 export const MARKDEEP_FOOTER = `<script>window.markdeepOptions = {tocStyle: 'long'};</script>\n<script src="https://morgan3d.github.io/markdeep/latest/markdeep.min.js" charset="utf-8"></script>`;
+export const SCREENSHOT_READY_MARKUP = '<script>document.documentElement.dataset.tocBuilderReady = \'true\';</script>';
 
 export function validateTemplate(template) {
   if (typeof template !== 'string') {
@@ -41,4 +42,8 @@ export function render(template, markdown) {
 
   const withFooter = template.replace(CLOSE_BODY_RE, `${MARKDEEP_FOOTER}</body>`);
   return withFooter.replace(MARKDOWN_PLACEHOLDER, () => markdown);
+}
+
+export function renderForScreenshot(template, markdown) {
+  return render(template, markdown).replace(`${MARKDEEP_FOOTER}</body>`, `${MARKDEEP_FOOTER}\n${SCREENSHOT_READY_MARKUP}</body>`);
 }

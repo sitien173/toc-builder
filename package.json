@@ -18,6 +18,8 @@
     "test": "node --test"
   },
   "dependencies": {
-    "open": "^11.0.0"
+    "@puppeteer/browsers": "2.10.6",
+    "open": "^11.0.0",
+    "puppeteer-core": "24.16.0"
   }
 }

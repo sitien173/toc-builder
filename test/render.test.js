@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { render, validateTemplate } from '../src/render.js';
+import { render, renderForScreenshot, validateTemplate } from '../src/render.js';
 
 const validTemplate = '<html><BODY>prefix {{markdown}} suffix</body></html>';
 
@@ -11,6 +11,15 @@ test('renders markdown with the owned long Markdeep footer', () => {
   assert.equal(output, '<html><BODY>prefix {{markdown}} suffix<script>window.markdeepOptions = {tocStyle: \'long\'};</script>\n<script src="https://morgan3d.github.io/markdeep/latest/markdeep.min.js" charset="utf-8"></script></body></html>'.replace('{{markdown}}', markdown));
   assert.ok(output.indexOf(markdown) < output.indexOf('tocStyle'));
   assert.equal(output.match(/# Title\n\n<div>raw<\/div>\n<\/body>\n/)?.[0], markdown);
+});
+
+test('adds screenshot readiness markup after the Markdeep loader only for screenshots', () => {
+  const normal = render('<body>{{markdown}}</body>', '# Title');
+  const screenshot = renderForScreenshot('<body>{{markdown}}</body>', '# Title');
+
+  assert.equal(normal, render('<body>{{markdown}}</body>', '# Title'));
+  assert.match(screenshot, /markdeep\.min\.js[\s\S]*tocBuilderReady/);
+  assert.equal(screenshot.indexOf('tocBuilderReady'), screenshot.lastIndexOf('tocBuilderReady'));
 });
 
 test('preserves replacement tokens in Markdown', () => {
