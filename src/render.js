@@ -40,5 +40,5 @@ export function render(template, markdown) {
   }
 
   const withFooter = template.replace(CLOSE_BODY_RE, `${MARKDEEP_FOOTER}</body>`);
-  return withFooter.replace(MARKDOWN_PLACEHOLDER, markdown);
+  return withFooter.replace(MARKDOWN_PLACEHOLDER, () => markdown);
 }

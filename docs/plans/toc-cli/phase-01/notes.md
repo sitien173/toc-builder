@@ -81,3 +81,25 @@
 ### Test evidence
 - `npm test -- test/render.test.js`: 5 passed, 0 failed.
 - `npm ls --depth=0`: dependency tree clean with `open` only.
+
+## Fix — Markdown replacement tokens
+
+### Decisions made
+- Use a replacement callback so Markdown is inserted as literal content rather than interpreted by `String.prototype.replace`.
+
+### Spec deviations
+- none
+
+### Tradeoffs accepted
+- none
+
+### Assumptions
+- Markdown may legitimately contain replacement-token sequences such as `$&`, `$$`, `$\``, and `$\'`.
+
+### Follow-ups for human
+- none
+
+### Test evidence
+- RED -> GREEN: regression test failed with string replacement, then passed after changing replacement to `() => markdown`.
+- `npm test -- test/render.test.js`: 6 passed, 0 failed.
+- `npm ls --depth=0`: `open@11.0.0` only runtime dependency.

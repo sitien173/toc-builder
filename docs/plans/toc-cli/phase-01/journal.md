@@ -40,6 +40,30 @@ TASK_COMPLETE
 
 Phase 1 completed. Journal: docs/plans/toc-cli/phase-01/journal.md.
 
+# EXTERNAL RESPONSE
+## META
+- Phase / Started / Finished / Plan dir
+- Phase 1 fix / 2026-07-31T09:17:00Z / 2026-07-31T09:19:00Z / docs/plans/toc-cli
+## SUMMARY
+Fixed Markdown replacement so literal replacement-token sequences remain unchanged.
+## FILES MODIFIED
+| Action | Path | Change |
+|---|---|---|
+| Modified | src/render.js | Replaced string replacement with a callback that returns Markdown literally. |
+| Modified | test/render.test.js | Added regression coverage for `$&`, `$$`, `$\``, and `$\'`. |
+| Modified | docs/plans/toc-cli/phase-01/notes.md | Recorded RED-to-GREEN regression evidence. |
+| Modified | docs/plans/toc-cli/phase-01/journal.md | Appended this implementation response. |
+## NOTES
+- phase-01/notes.md (## Fix — Markdown replacement tokens)
+## SPEC COMPLIANCE
+- Meets Spec? YES — Markdown content is preserved unchanged and both requested checks pass.
+## CLARIFICATIONS NEEDED
+None
+## NEXT
+TASK_COMPLETE
+
+Phase 1 completed. Journal: docs/plans/toc-cli/phase-01/journal.md.
+
 ## Quality Review
 
 <!-- Coordinator appends the independent review response here. -->

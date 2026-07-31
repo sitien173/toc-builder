@@ -13,6 +13,13 @@ test('renders markdown with the owned long Markdeep footer', () => {
   assert.equal(output.match(/# Title\n\n<div>raw<\/div>\n<\/body>\n/)?.[0], markdown);
 });
 
+test('preserves replacement tokens in Markdown', () => {
+  const markdown = 'literal $& and $$ and $` and $\'';
+  const output = render('<body>{{markdown}}</body>', markdown);
+
+  assert.ok(output.includes(markdown));
+});
+
 test('accepts exactly one placeholder inside one body region', () => {
   assert.doesNotThrow(() => validateTemplate('<body>{{markdown}}</body>'));
 });
