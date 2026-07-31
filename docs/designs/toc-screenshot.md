@@ -33,7 +33,7 @@ The normal HTML workflow runs first:
 
 Screenshot mode then runs these steps:
 
-1. Resolve an installed Chrome or Chromium browser.
+1. Resolve an installed Chrome, Chromium, Brave, Edge, or Firefox browser.
 2. Open generated HTML using the headless browser.
 4. Wait for Markdeep and layout readiness.
 5. Require exactly one rendered long TOC.
@@ -67,7 +67,7 @@ Normal rendering keeps the current footer unchanged.
 `src/screenshot.js` owns screenshot behavior:
 
 - Dynamically load Playwright Core.
-- Resolve an installed Chrome or Chromium browser.
+- Resolve an installed Chrome, Chromium, Brave, Edge, or Firefox browser.
 - Launch a fresh headless browser profile.
 - Wait for rendering readiness.
 - Validate the TOC selection.
@@ -87,7 +87,7 @@ Set `TOC_BROWSER_PATH` when automatic system-browser discovery cannot find the e
 Use `playwright-core` for browser automation.
 It does not download browsers during package installation.
 
-Use an installed Chrome or Chromium browser.
+Use an installed Chrome, Chromium, Brave, Edge, or Firefox browser.
 Set `TOC_BROWSER_PATH` when automatic discovery cannot find it.
 
 Use `@mariozechner/clipboard` for image clipboard writes.

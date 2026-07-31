@@ -4,8 +4,11 @@ import { access } from 'node:fs/promises';
 const READY_TIMEOUT = 30_000;
 
 async function defaultDependencies() {
-  const { chromium } = await import('playwright-core');
-  return { launch: chromium.launch.bind(chromium) };
+  const { chromium, firefox } = await import('playwright-core');
+  return {
+    launch: chromium.launch.bind(chromium),
+    launchFirefox: firefox.launch.bind(firefox),
+  };
 }
 
 function defaultBrowserPaths(platform, env) {
@@ -13,26 +16,48 @@ function defaultBrowserPaths(platform, env) {
     return [
       '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
       '/Applications/Chromium.app/Contents/MacOS/Chromium',
+      '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
+      '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+      '/Applications/Firefox.app/Contents/MacOS/firefox',
     ];
   }
   if (platform === 'win32') {
     return [env.PROGRAMFILES, env['PROGRAMFILES(X86)'], env.LOCALAPPDATA]
       .filter(Boolean)
-      .map(directory => `${directory}\\Google\\Chrome\\Application\\chrome.exe`);
+      .flatMap(directory => [
+        `${directory}\\Google\\Chrome\\Application\\chrome.exe`,
+        `${directory}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`,
+        `${directory}\\Microsoft\\Edge\\Application\\msedge.exe`,
+        `${directory}\\Mozilla Firefox\\firefox.exe`,
+      ]);
   }
-  return ['/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'];
+  return [
+    '/usr/bin/google-chrome',
+    '/opt/google/chrome/chrome',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/brave-browser',
+    '/opt/brave.com/brave/brave-browser',
+    '/usr/bin/microsoft-edge',
+    '/opt/microsoft/msedge/msedge',
+    '/usr/bin/firefox',
+  ];
 }
 
-export async function resolveBrowser({ executablePath, browserPaths, env = process.env, isExecutable } = {}) {
+function isFirefox(executablePath) {
+  return /firefox(?:-bin)?(?:\.exe)?$/i.test(executablePath);
+}
+
+export async function resolveBrowser({ executablePath, browserPaths, env = process.env, isExecutable, platform = process.platform } = {}) {
   if (executablePath ?? env.TOC_BROWSER_PATH) {
     return executablePath ?? env.TOC_BROWSER_PATH;
   }
-  const candidates = browserPaths ?? defaultBrowserPaths(process.platform, env);
+  const candidates = browserPaths ?? defaultBrowserPaths(platform, env);
   const canExecute = isExecutable ?? (path => access(path, constants.X_OK).then(() => true, () => false));
   for (const candidate of candidates) {
     if (await canExecute(candidate)) return candidate;
   }
-  throw new Error('No system browser found. Install Chrome or Chromium, or set TOC_BROWSER_PATH.');
+  throw new Error('No system browser found. Install Chrome, Brave, Edge, or Firefox, or set TOC_BROWSER_PATH.');
 }
 
 async function disableMotion(page) {
@@ -48,11 +73,12 @@ export async function captureTocScreenshot(html, options = {}) {
   const executablePath = options.resolveBrowser
     ? await options.resolveBrowser()
     : await resolveBrowser(options);
-  const browser = await dependencies.launch({
+  const launch = isFirefox(executablePath) ? dependencies.launchFirefox : dependencies.launch;
+  const browser = await launch({
     executablePath,
     headless: true,
-    chromiumSandbox: true,
     args: [],
+    ...(isFirefox(executablePath) ? {} : { chromiumSandbox: true }),
   });
 
   let primaryError;

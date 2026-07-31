@@ -48,6 +48,21 @@ test('waits for readiness, selects one stable TOC, disables motion, and returns 
   assert.equal(wasClosed(), true);
 });
 
+test('launches Firefox through Playwright Firefox', async () => {
+  const page = fakePage();
+  const { browser } = harness(page);
+  let launchOptions;
+  await captureTocScreenshot('<html></html>', {
+    launch: async () => assert.fail('Chromium must not launch Firefox'),
+    launchFirefox: async options => { launchOptions = options; return browser; },
+    resolveBrowser: async () => '/usr/bin/firefox',
+  });
+
+  assert.equal(launchOptions.executablePath, '/usr/bin/firefox');
+  assert.equal(launchOptions.headless, true);
+  assert.equal(launchOptions.chromiumSandbox, undefined);
+});
+
 test('rejects missing or duplicate TOCs and still closes the browser', async () => {
   for (const count of [0, 2]) {
     const { browser, wasClosed } = harness(fakePage({ count }));
@@ -81,6 +96,24 @@ test('browser resolution detects an executable system browser', async () => {
     isExecutable: async path => path === '/usr/bin/chromium',
   });
   assert.equal(browser, '/usr/bin/chromium');
+});
+
+test('browser resolution checks Chrome, Brave, Edge, and Firefox paths', async () => {
+  const checked = [];
+  const browser = await resolveBrowser({
+    env: {},
+    platform: 'linux',
+    isExecutable: async path => {
+      checked.push(path);
+      return path === '/usr/bin/firefox';
+    },
+  });
+
+  assert.equal(browser, '/usr/bin/firefox');
+  assert.ok(checked.includes('/usr/bin/google-chrome'));
+  assert.ok(checked.includes('/usr/bin/brave-browser'));
+  assert.ok(checked.includes('/usr/bin/microsoft-edge'));
+  assert.ok(checked.includes('/usr/bin/firefox'));
 });
 
 test('browser resolution rejects when no system browser is available', async () => {
