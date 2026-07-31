@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "description": "Generate temporary Markdeep HTML table-of-contents views for Markdown files.",
   "type": "module",
+  "files": [
+    "README.md",
+    "src/",
+    "templates/"
+  ],
   "bin": {
     "toc": "src/cli.js"
   },
