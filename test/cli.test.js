@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -48,6 +49,21 @@ test('maps argument and operational failures to exit codes without stack traces'
   assert.equal(errors.length, 2);
   assert.ok(errors.every(value => !value.includes('Error:')));
   assert.ok(errors.every(value => !value.includes(' at ')));
+});
+
+test('runs when invoked through an npm-style symlink', async () => {
+  const directory = await fixture({});
+  try {
+    const binPath = path.join(directory, 'toc');
+    await fs.symlink(path.join(projectRoot, 'src/cli.js'), binPath);
+
+    const result = spawnSync(binPath, [], { encoding: 'utf8' });
+
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /Expected exactly one Markdown file/);
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true });
+  }
 });
 
 test('renders, exclusively writes, prints, and opens a temporary HTML file', async () => {

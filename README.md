@@ -93,4 +93,37 @@ npm test
 ```
 
 Tests mock browser launching and never open a real browser or download
-Markdeep. The package is not published automatically by this project.
+Markdeep. Tests never publish the package.
+
+## Publishing
+
+Publishing uses npm trusted publishing through GitHub Actions. The workflow
+requires npm CLI 11.5.1 or newer and Node.js 22.14.0 or newer.
+
+Publish version `0.1.0` manually once to create the package:
+
+```sh
+npm login
+npm ci
+npm test
+npm publish --access public
+```
+
+Authorize the GitHub workflow afterward:
+
+```sh
+npm trust github toc-builder \
+  --repo sitien173/toc-builder \
+  --file publish.yml \
+  --allow-publish
+```
+
+Future releases publish when version tags reach GitHub:
+
+```sh
+npm version patch
+git push origin main --follow-tags
+```
+
+Use `minor` or `major` when required. The workflow verifies the tag matches
+`package.json`, runs tests, and publishes with npm provenance.
