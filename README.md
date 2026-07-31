@@ -26,6 +26,17 @@ Use a custom HTML template:
 toc README.md --template docs-template.html
 ```
 
+Enable opt-in lifecycle diagnostics with `--verbose`; it may appear anywhere in
+an otherwise valid command line:
+
+```sh
+toc --verbose README.md
+toc README.md --screenshot --verbose
+```
+
+Verbose messages are written to standard error. Standard output remains limited
+to the generated path(s), so existing consumers remain compatible.
+
 The input path must be exactly one file whose extension is `.md` (the extension
 check is case-insensitive). Relative paths are resolved from the current
 working directory.
@@ -119,7 +130,9 @@ mode or provide a desktop X11/Wayland session for clipboard support.
 
 Invalid arguments return exit code 2; file, template, rendering, writing, and
 browser failures return exit code 1. Clipboard failures only warn. Errors are
-concise and do not include stack traces.
+concise and do not include stack traces by default; `--verbose` adds a stack
+trace for fatal failures. Clipboard warnings remain concise and never include
+stack traces.
 
 Markdeep is loaded from the remote URL
 `https://morgan3d.github.io/markdeep/latest/markdeep.min.js`, so viewing

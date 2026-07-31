@@ -22,18 +22,27 @@ async function removeOutput(outputPath) {
 }
 
 test('parses one Markdown path and an optional template', () => {
-  assert.deepEqual(parseArgs(['README.MD']), { input: 'README.MD', template: null, screenshot: false });
+  assert.deepEqual(parseArgs(['README.MD']), { input: 'README.MD', template: null, screenshot: false, verbose: false });
   assert.deepEqual(parseArgs(['README.md', '--template', 'custom.html']), {
-    input: 'README.md', template: 'custom.html', screenshot: false
+    input: 'README.md', template: 'custom.html', screenshot: false, verbose: false
   });
   assert.deepEqual(parseArgs(['README.md', '--screenshot']), {
-    input: 'README.md', template: null, screenshot: true
+    input: 'README.md', template: null, screenshot: true, verbose: false
   });
   assert.deepEqual(parseArgs(['README.md', '--screenshot', '--template', 'custom.html']), {
-    input: 'README.md', template: 'custom.html', screenshot: true
+    input: 'README.md', template: 'custom.html', screenshot: true, verbose: false
   });
   assert.deepEqual(parseArgs(['README.md', '--template', 'custom.html', '--screenshot']), {
-    input: 'README.md', template: 'custom.html', screenshot: true
+    input: 'README.md', template: 'custom.html', screenshot: true, verbose: false
+  });
+  assert.deepEqual(parseArgs(['--verbose', 'README.md']), {
+    input: 'README.md', template: null, screenshot: false, verbose: true
+  });
+  assert.deepEqual(parseArgs(['README.md', '--verbose', '--screenshot']), {
+    input: 'README.md', template: null, screenshot: true, verbose: true
+  });
+  assert.deepEqual(parseArgs(['README.md', '--screenshot', '--verbose']), {
+    input: 'README.md', template: null, screenshot: true, verbose: true
   });
 });
 
@@ -45,7 +54,8 @@ test('rejects invalid argument combinations with exit code 2', () => {
     ['one.md', '--unknown'],
     ['one.md', '--template'],
     ['one.md', '--template', 'a.html', '--template', 'b.html'],
-    ['one.md', '--screenshot', '--screenshot']
+    ['one.md', '--screenshot', '--screenshot'],
+    ['one.md', '--verbose', '--verbose']
   ]) {
     assert.throws(() => parseArgs(argv), error => error.exitCode === 2);
   }
@@ -94,6 +104,61 @@ test('renders, exclusively writes, prints, and opens a temporary HTML file', asy
     assert.match(await fs.readFile(outputPath, 'utf8'), /# Unicode café/);
   } finally {
     await removeOutput(outputPath);
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('logs the regular lifecycle only when verbose is enabled', async () => {
+  const directory = await fixture({ 'README.md': '# heading' });
+  const printed = [];
+  const warnings = [];
+  let outputPath;
+  try {
+    ({ outputPath } = await run(['--verbose', 'README.md'], {
+      cwd: directory,
+      print: value => printed.push(value),
+      warn: value => warnings.push(value),
+      openFile: async () => {}
+    }));
+    assert.deepEqual(printed, [outputPath]);
+    assert.deepEqual(warnings, [
+      '[toc] Reading input and template',
+      '[toc] Rendering HTML',
+      '[toc] Writing generated HTML',
+      '[toc] Opening generated HTML',
+      '[toc] Complete'
+    ]);
+  } finally {
+    await removeOutput(outputPath);
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('logs the screenshot lifecycle and keeps clipboard warnings stack-free', async () => {
+  const directory = await fixture({ 'README.md': '# heading' });
+  const warnings = [];
+  let outputPath;
+  let pngPath;
+  try {
+    ({ outputPath, pngPath } = await run(['README.md', '--verbose', '--screenshot'], {
+      cwd: directory,
+      warn: value => warnings.push(value),
+      openFile: async () => {},
+      captureScreenshot: async () => Buffer.from('PNG'),
+      copyImage: async () => { throw new Error('no clipboard'); }
+    }));
+    assert.deepEqual(warnings.slice(0, 9), [
+      '[toc] Reading input and template', '[toc] Rendering HTML',
+      '[toc] Writing generated HTML', '[toc] Opening generated HTML',
+      '[toc] Capturing TOC screenshot', '[toc] Writing TOC screenshot',
+      '[toc] Copying screenshot to clipboard',
+      `Warning: unable to copy PNG to clipboard at ${pngPath}: no clipboard`,
+      '[toc] Complete'
+    ]);
+    assert.ok(!warnings[7].includes('\n    at '));
+  } finally {
+    await removeOutput(outputPath);
+    await removeOutput(pngPath);
     await fs.rm(directory, { recursive: true, force: true });
   }
 });
