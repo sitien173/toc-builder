@@ -22,10 +22,18 @@ async function removeOutput(outputPath) {
 }
 
 test('parses one Markdown path and an optional template', () => {
-  assert.deepEqual(parseArgs(['README.MD']), { input: 'README.MD', template: null });
+  assert.deepEqual(parseArgs(['README.MD']), { input: 'README.MD', template: null, screenshot: false });
   assert.deepEqual(parseArgs(['README.md', '--template', 'custom.html']), {
-    input: 'README.md',
-    template: 'custom.html'
+    input: 'README.md', template: 'custom.html', screenshot: false
+  });
+  assert.deepEqual(parseArgs(['README.md', '--screenshot']), {
+    input: 'README.md', template: null, screenshot: true
+  });
+  assert.deepEqual(parseArgs(['README.md', '--screenshot', '--template', 'custom.html']), {
+    input: 'README.md', template: 'custom.html', screenshot: true
+  });
+  assert.deepEqual(parseArgs(['README.md', '--template', 'custom.html', '--screenshot']), {
+    input: 'README.md', template: 'custom.html', screenshot: true
   });
 });
 
@@ -36,7 +44,8 @@ test('rejects invalid argument combinations with exit code 2', () => {
     ['one.txt'],
     ['one.md', '--unknown'],
     ['one.md', '--template'],
-    ['one.md', '--template', 'a.html', '--template', 'b.html']
+    ['one.md', '--template', 'a.html', '--template', 'b.html'],
+    ['one.md', '--screenshot', '--screenshot']
   ]) {
     assert.throws(() => parseArgs(argv), error => error.exitCode === 2);
   }
@@ -85,6 +94,73 @@ test('renders, exclusively writes, prints, and opens a temporary HTML file', asy
     assert.match(await fs.readFile(outputPath, 'utf8'), /# Unicode café/);
   } finally {
     await removeOutput(outputPath);
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('runs the optional screenshot workflow with related exclusive outputs', async () => {
+  const directory = await fixture({ 'README.md': '# heading' });
+  const printed = [];
+  const events = [];
+  let outputPath;
+  let pngPath;
+  const bytes = Buffer.from([1, 2, 3]);
+  try {
+    ({ outputPath, pngPath } = await run(['README.md', '--screenshot'], {
+      cwd: directory,
+      print: value => printed.push(value),
+      openFile: async () => events.push('open'),
+      captureScreenshot: async html => { events.push('capture'); assert.match(html, /tocBuilderReady/); return bytes; },
+      copyImage: async received => { events.push('copy'); assert.deepEqual(received, bytes); },
+    }));
+    assert.deepEqual(printed, [outputPath, pngPath]);
+    assert.equal(events[0], 'open');
+    assert.deepEqual(events.slice(1), ['capture', 'copy']);
+    assert.match(path.basename(outputPath), /^[0-9a-f-]{36}_README\.md\.html$/);
+    assert.match(path.basename(pngPath), /^[0-9a-f-]{36}_README\.md\.toc\.png$/);
+    assert.equal(path.basename(outputPath).slice(0, 36), path.basename(pngPath).slice(0, 36));
+    assert.deepEqual(await fs.readFile(pngPath), bytes);
+  } finally {
+    await removeOutput(outputPath);
+    await removeOutput(pngPath);
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('does not capture when opening the generated HTML fails', async () => {
+  const directory = await fixture({ 'README.md': '# heading' });
+  let outputPath;
+  let captured = false;
+  try {
+    await assert.rejects(run(['README.md', '--screenshot'], {
+      cwd: directory,
+      openFile: async () => { throw new Error('browser unavailable'); },
+      captureScreenshot: async () => { captured = true; return Buffer.from('PNG'); },
+    }), error => error.exitCode === 1);
+    assert.equal(captured, false);
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('clipboard failure warns but succeeds after retaining the PNG', async () => {
+  const directory = await fixture({ 'README.md': '# heading' });
+  const warnings = [];
+  let outputPath;
+  let pngPath;
+  try {
+    ({ outputPath, pngPath } = await run(['README.md', '--screenshot'], {
+      cwd: directory,
+      openFile: async () => {},
+      warn: value => warnings.push(value),
+      captureScreenshot: async () => Buffer.from('PNG'),
+      copyImage: async () => { throw new Error('no clipboard'); },
+    }));
+    assert.match(warnings[0], new RegExp(pngPath));
+    assert.equal(await fs.access(pngPath).then(() => true), true);
+  } finally {
+    await removeOutput(outputPath);
+    await removeOutput(pngPath);
     await fs.rm(directory, { recursive: true, force: true });
   }
 });
