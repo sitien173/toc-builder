@@ -2,6 +2,10 @@
   "name": "toc-builder",
   "version": "0.1.4",
   "description": "Generate temporary Markdeep HTML table-of-contents views for Markdown files.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sitien173/toc-builder"
+  },
   "type": "module",
   "files": [
     "README.md",
