@@ -1,5 +1,11 @@
 import { PROTOCOL_VERSION } from './protocol.js';
 
+function safeEncodeURI(uri) {
+  if (!uri) return '';
+  // Encode non-ASCII characters once without double-encoding or stripping ASCII
+  return uri.replace(/[^\x00-\x7F]+/g, (match) => encodeURI(match));
+}
+
 export function prepareWebviewHtml(renderedHtml, options = {}) {
   const { cspSource = '', baseUri = '', revision = 0, sourceUri = '' } = options;
 
@@ -13,13 +19,15 @@ export function prepareWebviewHtml(renderedHtml, options = {}) {
 
   let baseTag = '';
   if (baseUri) {
-    const uri = baseUri.endsWith('/') ? baseUri : `${baseUri}/`;
+    const encodedBaseUri = safeEncodeURI(baseUri);
+    const uri = encodedBaseUri.endsWith('/') ? encodedBaseUri : `${encodedBaseUri}/`;
     baseTag = `<base href="${uri}">`;
   }
 
+  const safeSourceUri = safeEncodeURI(sourceUri);
   const state = {
     protocol: PROTOCOL_VERSION,
-    sourceUri,
+    sourceUri: safeSourceUri,
     revision,
   };
   const safeStateJson = JSON.stringify(state).replace(/</g, '\\u003c');

@@ -66,7 +66,7 @@ Fresh verification commands:
 
 - `npm test --prefix vscode`
 - `npm run build --prefix vscode`
-- `npm exec --prefix vscode vsce ls`
+- `cd vscode && npx vsce ls`
 - `npm test`
 
 ## Rules

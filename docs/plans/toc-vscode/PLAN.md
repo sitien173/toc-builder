@@ -268,7 +268,7 @@ Read `docs/designs/toc-vscode.md` before every phase.
 
 - `npm test --prefix vscode`
 - `npm run build --prefix vscode`
-- `npm exec --prefix vscode vsce ls`
+- `cd vscode && npx vsce ls`
 - `npm test`
 
 **Commit:** `feat(vscode): add screenshot command and release hardening`

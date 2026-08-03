@@ -47,3 +47,26 @@ jobs:
         run: npm ci
       - name: Run local browser integration
         run: npm run test:screenshot-integration
+
+  vscode:
+    name: VSCode Extension on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ['20.x']
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install extension dependencies
+        run: npm ci --prefix vscode
+      - name: Run extension tests
+        run: npm test --prefix vscode
+      - name: Build extension bundle
+        run: npm run build --prefix vscode

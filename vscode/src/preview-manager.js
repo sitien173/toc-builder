@@ -18,6 +18,22 @@ export class PreviewManager {
     this.activeController = null;
   }
 
+  getLocalResourceRoots(document) {
+    const roots = [];
+    if (this.vscode.Uri?.file) {
+      if (document?.uri?.path) {
+        const docDir = document.uri.path.substring(0, document.uri.path.lastIndexOf('/'));
+        roots.push(this.vscode.Uri.file(docDir));
+      }
+      const templatePath = this.templateService?.getTemplatePath?.(document?.uri);
+      if (templatePath && typeof templatePath === 'string') {
+        const tDir = templatePath.substring(0, templatePath.lastIndexOf('/'));
+        if (tDir) roots.push(this.vscode.Uri.file(tDir));
+      }
+    }
+    return roots;
+  }
+
   async showPreview(targetDocument, viewColumn) {
     let document = targetDocument;
 
@@ -41,6 +57,8 @@ export class PreviewManager {
       return;
     }
 
+    const localResourceRoots = this.getLocalResourceRoots(document);
+
     const panel = this.vscode.window.createWebviewPanel(
       'tocBuilder.preview',
       'TOC Preview',
@@ -48,7 +66,7 @@ export class PreviewManager {
       {
         enableScripts: true,
         retainContextWhenHidden: false,
-        localResourceRoots: [],
+        localResourceRoots,
       }
     );
 

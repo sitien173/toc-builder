@@ -1,0 +1,28 @@
+name: Publish VSCode Extension
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    name: Publish to VSCode Marketplace
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - name: Install extension dependencies
+        run: npm ci --prefix vscode
+      - name: Run extension tests
+        run: npm test --prefix vscode
+      - name: Build extension bundle
+        run: npm run build --prefix vscode
+      - name: Publish to VSCode Marketplace
+        run: npx vsce publish --packagePath vscode
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}

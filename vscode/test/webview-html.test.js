@@ -78,3 +78,14 @@ test('webview HTML adapter safely JSON-encodes state escaping <', () => {
   assert.ok(result.includes('acquireVsCodeApi()'));
   assert.ok(result.includes('requestAnimationFrame'));
 });
+
+test('webview HTML adapter escapes non-ASCII characters in URIs once', () => {
+  const inputHtml = '<html><head></head><body></body></html>';
+  const result = prepareWebviewHtml(inputHtml, {
+    sourceUri: 'file:///path/ö/doc.md',
+    baseUri: 'file:///path/ö',
+  });
+
+  assert.ok(result.includes('file:///path/%C3%B6/doc.md'));
+  assert.ok(result.includes('<base href="file:///path/%C3%B6/">'));
+});

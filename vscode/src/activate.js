@@ -2,6 +2,7 @@ import { ContentService } from './content-service.js';
 import { TemplateService } from './template-service.js';
 import { PreviewManager } from './preview-manager.js';
 import { TemplateCommands } from './template-commands.js';
+import { ScreenshotService } from './screenshot-service.js';
 import { prepareWebviewHtml } from './webview-html.js';
 import { validateTemplate } from '../../src/render.js';
 
@@ -39,11 +40,22 @@ export function createExtension({
     previewManager,
   });
 
+  const screenshotService = new ScreenshotService({
+    vscode,
+    contentService,
+    templateService,
+    renderForScreenshot,
+    captureTocScreenshot,
+    copyImage,
+    previewManager,
+  });
+
   return {
     contentService,
     templateService,
     previewManager,
     templateCommands,
+    screenshotService,
     activate: (context) => {
       const subscriptions = [
         vscode.commands.registerCommand('tocBuilder.preview', (uri) => {
@@ -52,8 +64,8 @@ export function createExtension({
         vscode.commands.registerCommand('tocBuilder.refresh', () => {
           return previewManager.refreshPreview();
         }),
-        vscode.commands.registerCommand('tocBuilder.screenshot', () => {
-          // Screenshot command wired in Phase 4
+        vscode.commands.registerCommand('tocBuilder.screenshot', (uri) => {
+          return screenshotService.captureScreenshot(uri);
         }),
         vscode.commands.registerCommand('tocBuilder.setTemplate', (uri) => {
           return templateCommands.setTemplateCommand(uri);
