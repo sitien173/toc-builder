@@ -13,6 +13,6 @@ test('captures one local TOC element as a bounded PNG', { skip: !executablePath 
   const png = await captureTocScreenshot(html, { executablePath });
 
   assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
-  assert.equal(png.readUInt32BE(16), 240);
-  assert.equal(png.readUInt32BE(20), 80);
+  assert.equal(png.readUInt32BE(16), 252);
+  assert.equal(png.readUInt32BE(20), 104);
 });

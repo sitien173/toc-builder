@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { captureTocScreenshot, resolveBrowser } from '../src/screenshot.js';
 
-function fakePage({ count = 1, boxes = [{ x: 0, y: 0, width: 100, height: 40 }, { x: 0, y: 0, width: 100, height: 40 }] } = {}) {
+function fakePage({ count = 1, boxes = [{ x: 0, y: 0, width: 100, height: 40 }, { x: 0, y: 0, width: 100, height: 40 }], onScreenshot } = {}) {
   let frame = 0;
   const element = {
     async boundingBox() { return boxes[Math.min(frame++, boxes.length - 1)]; },
@@ -19,6 +19,7 @@ function fakePage({ count = 1, boxes = [{ x: 0, y: 0, width: 100, height: 40 }, 
       assert.equal(typeof fn, 'function');
     },
     async $$() { return count === 1 ? [element] : Array.from({ length: count }, () => element); },
+    async screenshot(options) { return onScreenshot ? onScreenshot(options) : assert.fail('page.screenshot must be called with a clip'); },
   };
 }
 
@@ -32,7 +33,12 @@ function harness(page, { closeError } = {}) {
 }
 
 test('waits for readiness, selects one stable TOC, disables motion, and returns PNG bytes', async () => {
-  const page = fakePage();
+  const page = fakePage({
+    onScreenshot: options => {
+      assert.deepEqual(options, { type: 'png', clip: { x: -24, y: -12, width: 136, height: 76 } });
+      return Buffer.from('PNG');
+    },
+  });
   const { browser, wasClosed } = harness(page);
   let launchOptions;
   const bytes = await captureTocScreenshot('<html></html>', {
@@ -48,8 +54,50 @@ test('waits for readiness, selects one stable TOC, disables motion, and returns 
   assert.equal(wasClosed(), true);
 });
 
+test('adds symmetric margins around the TOC and honors a margin override', async () => {
+  const boxes = [
+    { x: 30, y: 40, width: 200, height: 80 },
+    { x: 30, y: 40, width: 200, height: 80 },
+  ];
+  const clips = [];
+  const page = fakePage({
+    boxes,
+    onScreenshot: options => {
+      clips.push(options.clip);
+      return Buffer.from('PNG');
+    },
+  });
+  const { browser } = harness(page);
+  await captureTocScreenshot('<html></html>', {
+    launch: async () => browser,
+    resolveBrowser: async () => '/chrome',
+  });
+  assert.deepEqual(clips, [{ x: 6, y: 28, width: 236, height: 116 }]);
+
+  const page2 = fakePage({
+    boxes,
+    onScreenshot: options => {
+      clips.push(options.clip);
+      return Buffer.from('PNG');
+    },
+  });
+  const { browser: browser2 } = harness(page2);
+  await captureTocScreenshot('<html></html>', {
+    launch: async () => browser2,
+    resolveBrowser: async () => '/chrome',
+    margin: { left: 10, bottom: 20 },
+  });
+  assert.deepEqual(clips[1], { x: 20, y: 28, width: 222, height: 112 });
+});
+
 test('launches Firefox through Playwright Firefox', async () => {
-  const page = fakePage();
+  const page = fakePage({
+    onScreenshot: options => {
+      assert.equal(options.type, 'png');
+      assert.ok(options.clip);
+      return Buffer.from('PNG');
+    },
+  });
   const { browser } = harness(page);
   let launchOptions;
   await captureTocScreenshot('<html></html>', {

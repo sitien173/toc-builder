@@ -55,7 +55,9 @@ remove it when you no longer need it.
 ## Screenshots
 
 Add `--screenshot` to capture the rendered `.longTOC` element and copy its PNG
-to the desktop clipboard:
+to the desktop clipboard. The PNG is padded with a white margin around the
+element, with a larger 24px margin on the left and bottom and a 12px margin on
+the top and right:
 
 ```sh
 toc README.md --screenshot

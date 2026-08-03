@@ -3,6 +3,8 @@ import { access } from 'node:fs/promises';
 
 const READY_TIMEOUT = 30_000;
 
+export const SCREENSHOT_MARGIN = { left: 24, right: 12, top: 12, bottom: 24 };
+
 async function defaultDependencies() {
   const { chromium, firefox } = await import('playwright-core');
   return {
@@ -106,7 +108,15 @@ export async function captureTocScreenshot(html, options = {}) {
       throw new Error('TOC bounding box did not remain stable');
     }
     if (first.width <= 0 || first.height <= 0) throw new Error('TOC bounding box is invalid');
-    return Buffer.from(await element.screenshot({ type: 'png' }));
+
+    const margin = { ...SCREENSHOT_MARGIN, ...options.margin };
+    const clip = {
+      x: first.x - margin.left,
+      y: first.y - margin.top,
+      width: first.width + margin.left + margin.right,
+      height: first.height + margin.top + margin.bottom,
+    };
+    return Buffer.from(await page.screenshot({ type: 'png', clip }));
   } catch (error) {
     primaryError = error;
     throw error;
