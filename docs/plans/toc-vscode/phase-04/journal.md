@@ -11,7 +11,7 @@
 - Implementation Job: n/a
 - Review Job: n/a
 - Started: 2026-08-03T13:28:40+07:00
-- Finished: 2026-08-03T13:30:48+07:00
+- Finished: 2026-08-03T13:35:32+07:00
 
 ## Implementation Response
 
@@ -19,26 +19,21 @@
 ## META
 - Phase: phase-04
 - Started: 2026-08-03T13:28:40+07:00
-- Finished: 2026-08-03T13:30:48+07:00
+- Finished: 2026-08-03T13:35:32+07:00
 - Plan dir: docs/plans/toc-vscode/phase-04
 ## SUMMARY
-Implemented screenshot service with progress UI and Save PNG fallback, hardened URI escaping and resource roots, documented extension, and added CI and publish workflows.
+Implemented screenshot service with progress UI and Save PNG fallback, hardened URI escaping and resource roots (including extensionUri), documented extension, and added CI and publish workflows.
 ## FILES MODIFIED
 | Action | Path | Change |
-| Create | vscode/src/screenshot-service.js | Add screenshot service with progress UI, concurrency guard, and clipboard fallback |
-| Create | vscode/test/screenshot-service.test.js | Add unit tests for screenshot service, progress UI, and Save PNG fallback |
-| Create | vscode/README.md | Add extension README documenting usage, security, requirements, and packaging |
-| Modify | vscode/src/webview-html.js | Add safe non-ASCII URI encoding |
-| Modify | vscode/src/preview-manager.js | Add localResourceRoots calculation covering document, template, and extension directories |
-| Modify | vscode/src/activate.js | Wire ScreenshotService for tocBuilder.screenshot command |
-| Modify | .github/workflows/ci.yml | Add isolated VSCode extension CI job |
-| Create | .github/workflows/vscode-publish.yml | Add VSCode marketplace publish workflow requiring explicit release trigger |
-| Modify | docs/plans/toc-vscode/phase-04/notes.md | Add decision notes and test evidence for tasks 1-4 |
+| Modify | vscode/src/preview-manager.js | Thread extensionUri into PreviewManager and include in localResourceRoots alongside document and template roots |
+| Modify | vscode/test/preview-manager.test.js | Add test asserting extension resource root is included in localResourceRoots |
+| Modify | vscode/src/activate.js | Set previewManager.extensionUri from context on activation |
+| Modify | docs/plans/toc-vscode/phase-04/notes.md | Update decision notes and test evidence for task 3 fix |
 | Modify | docs/plans/toc-vscode/phase-04/journal.md | Update META and append external response |
 ## NOTES
 - docs/plans/toc-vscode/phase-04/notes.md (## Task 1, ## Task 2, ## Task 3, ## Task 4)
 ## SPEC COMPLIANCE
-- Meets Spec? YES — All phase 4 acceptance criteria met, 28 extension tests pass, vsce ls succeeds, root test suite passes unchanged.
+- Meets Spec? YES — All phase 4 acceptance criteria met, extension resource root included, 29 vscode tests pass, vsce ls succeeds, root test suite passes unchanged.
 ## CLARIFICATIONS NEEDED
 None
 ## NEXT

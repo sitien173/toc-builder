@@ -7,12 +7,14 @@ export class PreviewManager {
     templateService,
     render,
     prepareWebviewHtml,
+    extensionUri,
   }) {
     this.vscode = vscode;
     this.contentService = contentService;
     this.templateService = templateService;
     this.render = render;
     this.prepareWebviewHtml = prepareWebviewHtml;
+    this.extensionUri = extensionUri || null;
 
     this.activePanel = null;
     this.activeController = null;
@@ -20,6 +22,9 @@ export class PreviewManager {
 
   getLocalResourceRoots(document) {
     const roots = [];
+    if (this.extensionUri) {
+      roots.push(this.extensionUri);
+    }
     if (this.vscode.Uri?.file) {
       if (document?.uri?.path) {
         const docDir = document.uri.path.substring(0, document.uri.path.lastIndexOf('/'));

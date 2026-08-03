@@ -14,6 +14,7 @@ function createMockVsCode() {
     setOpenDocError: (val) => { openDocError = val; },
     ViewColumn: { Beside: 2 },
     Uri: {
+      file: (p) => ({ scheme: 'file', path: p, toString: () => `file://${p}` }),
       parse: (str) => ({ scheme: 'file', path: str.replace('file://', ''), toString: () => str }),
     },
     window: {
@@ -60,7 +61,7 @@ const mockContentService = {
   snapshot: async (doc) => ({ markdown: doc.getText(), template: mockTemplate, documentUri: doc.uri }),
 };
 const mockTemplateService = {
-  getTemplatePath: () => '',
+  getTemplatePath: (docUri) => '/workspace/templates/custom.html',
 };
 
 test('PreviewManager creates one panel and reuses/retargets it on next preview call', async () => {
@@ -68,7 +69,7 @@ test('PreviewManager creates one panel and reuses/retargets it on next preview c
   const manager = new PreviewManager({
     vscode,
     contentService: mockContentService,
-    templateService: mockTemplateService,
+    templateService: { getTemplatePath: () => '' },
     render,
     prepareWebviewHtml,
   });
@@ -87,6 +88,37 @@ test('PreviewManager creates one panel and reuses/retargets it on next preview c
   assert.equal(vscode.createdPanel, panel1, 'Panel must be reused');
   assert.equal(panel1.isRevealed, true, 'Panel must be revealed');
   assert.ok(panel1.webview.html.includes('# Doc 2'));
+});
+
+test('PreviewManager includes extension resource root in localResourceRoots alongside document and template roots', async () => {
+  const vscode = createMockVsCode();
+  const extensionUri = { scheme: 'file', path: '/extension/root', toString: () => 'file:///extension/root' };
+
+  const manager = new PreviewManager({
+    vscode,
+    contentService: mockContentService,
+    templateService: mockTemplateService,
+    render,
+    prepareWebviewHtml,
+    extensionUri,
+  });
+
+  const doc = {
+    uri: { scheme: 'file', path: '/workspace/doc.md', toString: () => 'file:///workspace/doc.md' },
+    getText: () => '# Doc',
+  };
+
+  await manager.showPreview(doc);
+  const panel = vscode.createdPanel;
+
+  assert.ok(panel !== null);
+  const roots = panel.options.localResourceRoots;
+  assert.ok(Array.isArray(roots), 'localResourceRoots must be an array');
+  assert.equal(roots.length, 3, 'Must contain extension, document, and template roots');
+
+  assert.equal(roots[0], extensionUri, 'Extension root must be present');
+  assert.equal(roots[1].path, '/workspace', 'Document directory root must be present');
+  assert.equal(roots[2].path, '/workspace/templates', 'Template directory root must be present');
 });
 
 test('PreviewManager clears references when panel is disposed', async () => {

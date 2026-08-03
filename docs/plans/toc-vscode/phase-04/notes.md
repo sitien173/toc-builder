@@ -46,7 +46,7 @@
 
 ### Decisions made
 - Hardened `safeEncodeURI` in `vscode/src/webview-html.js` to escape non-ASCII URI characters without stripping or double-encoding.
-- Hardened `localResourceRoots` in `vscode/src/preview-manager.js` to cover document, template, and extension directories.
+- Hardened `localResourceRoots` in `vscode/src/preview-manager.js` to cover document, template, and extension directories by threading `extensionUri`.
 - Wired `ScreenshotService` into `vscode/src/activate.js` for the `tocBuilder.screenshot` command.
 
 ### Spec deviations
@@ -62,7 +62,7 @@
 - none
 
 ### Test evidence
-- RED -> GREEN: Added non-ASCII URI encoding test in `test/webview-html.test.js`; all 28 vscode tests passed.
+- RED -> GREEN: Added non-ASCII URI encoding test in `test/webview-html.test.js` and extension resource root test in `test/preview-manager.test.js`; all 29 vscode tests passed.
 
 ## Task 4
 
@@ -84,4 +84,4 @@
 - none
 
 ### Test evidence
-- RED -> GREEN: Fresh verification checks passed: `npm test --prefix vscode` (28/28 tests pass), `npm run build --prefix vscode` succeeded, `npx vsce ls` listed package contents without error, and root `npm test` passed (33/33 tests pass).
+- RED -> GREEN: Fresh verification checks passed: `npm test --prefix vscode` (29/29 tests pass), `npm run build --prefix vscode` succeeded, `npx vsce ls` listed package contents without error, and root `npm test` passed (33/33 tests pass).

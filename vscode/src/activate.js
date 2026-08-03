@@ -57,6 +57,10 @@ export function createExtension({
     templateCommands,
     screenshotService,
     activate: (context) => {
+      if (context?.extensionUri) {
+        previewManager.extensionUri = context.extensionUri;
+      }
+
       const subscriptions = [
         vscode.commands.registerCommand('tocBuilder.preview', (uri) => {
           return previewManager.showPreview(uri);
