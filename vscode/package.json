@@ -2,7 +2,7 @@
   "name": "toc-builder",
   "displayName": "TOC Builder",
   "description": "Generate temporary Markdeep HTML table-of-contents views for Markdown files.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "toc-builder",
   "type": "module",
   "engines": {
