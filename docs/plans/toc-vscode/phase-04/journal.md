@@ -45,10 +45,24 @@ TASK_COMPLETE
 
 ## Review Result
 
-- Spec Status: PENDING
+- Spec Status: PASS
 - Debt: none
+
+## Fix Re-Review
+
+# CODE QUALITY REVIEW (fix delta)
+
+- **Status:** PASS
+- **Findings:**
+- The missing extension resource URI is securely captured in `vscode/src/activate.js` via `context.extensionUri` and correctly threaded into `PreviewManager`.
+- `PreviewManager.getLocalResourceRoots()` correctly consumes `this.extensionUri` and pushes it into the `roots` array alongside the document directory and custom template directory.
+- The corresponding unit test in `vscode/test/preview-manager.test.js` successfully and rigorously asserts that all three distinct roots (`extensionUri`, document root, and template root) are actively populated within the `localResourceRoots` option array.
+- The fix is fully contained within the authorized scope of files (`preview-manager.js`, `activate.js`, `preview-manager.test.js`, and the phase 04 documentation logs).
+- All 29 vscode tests pass seamlessly, successfully verifying the new security requirement and resolving the blocking finding.
+- **Scope:** 560f90c (a813941..HEAD)
 
 ## Final Commit
 
-- Implementation: pending
+- Implementation: a813941 (feat(vscode): add screenshot command and release hardening)
+- Fix: 560f90c (fix(vscode): include extension resource root in local resource roots)
 - State record: this journal update's commit
