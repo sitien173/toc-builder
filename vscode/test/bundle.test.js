@@ -36,6 +36,15 @@ test('vscode package manifest specifications', async () => {
   const menuCommands = webviewTitleMenu.map(m => m.command);
   assert.ok(menuCommands.includes('tocBuilder.refresh'));
   assert.ok(menuCommands.includes('tocBuilder.screenshot'));
+
+  const editorContextMenu = pkg.contributes?.menus?.['editor/context'];
+  assert.ok(Array.isArray(editorContextMenu), 'editor/context menu must be an array');
+  const contextCommands = editorContextMenu.map(m => m.command);
+  assert.ok(contextCommands.includes('tocBuilder.preview'));
+  assert.ok(contextCommands.includes('tocBuilder.screenshot'));
+  for (const entry of editorContextMenu) {
+    assert.equal(entry.when, 'resourceLangId == markdown', 'context menu must be scoped to Markdown files');
+  }
 });
 
 test('bundle output files exist', async () => {

@@ -6,6 +6,18 @@ import { ScreenshotService } from './screenshot-service.js';
 import { prepareWebviewHtml } from './webview-html.js';
 import { validateTemplate } from '../../src/render.js';
 
+function isTextDocument(value) {
+  return value && typeof value.getText === 'function' && value.uri;
+}
+
+export async function resolveDocument(vscode, resource) {
+  if (isTextDocument(resource)) return resource;
+  if (resource?.scheme && typeof vscode.workspace.openTextDocument === 'function') {
+    return vscode.workspace.openTextDocument(resource);
+  }
+  return undefined;
+}
+
 export function createExtension({
   vscode,
   render,
@@ -62,14 +74,16 @@ export function createExtension({
       }
 
       const subscriptions = [
-        vscode.commands.registerCommand('tocBuilder.preview', (uri) => {
-          return previewManager.showPreview(uri);
+        vscode.commands.registerCommand('tocBuilder.preview', async (resource) => {
+          const document = await resolveDocument(vscode, resource);
+          return previewManager.showPreview(document);
         }),
         vscode.commands.registerCommand('tocBuilder.refresh', () => {
           return previewManager.refreshPreview();
         }),
-        vscode.commands.registerCommand('tocBuilder.screenshot', (uri) => {
-          return screenshotService.captureScreenshot(uri);
+        vscode.commands.registerCommand('tocBuilder.screenshot', async (resource) => {
+          const document = await resolveDocument(vscode, resource);
+          return screenshotService.captureScreenshot(document);
         }),
         vscode.commands.registerCommand('tocBuilder.setTemplate', (uri) => {
           return templateCommands.setTemplateCommand(uri);

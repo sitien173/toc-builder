@@ -7,6 +7,7 @@ import { copyImage } from '../../src/clipboard.js';
 
 function createMockVsCode() {
   const registeredCommands = [];
+  const commandHandlers = {};
   let registeredSerializer = null;
 
   return {
@@ -16,10 +17,17 @@ function createMockVsCode() {
       onDidChangeTextDocument: () => ({ dispose: () => {} }),
       onDidSaveTextDocument: () => ({ dispose: () => {} }),
       onDidChangeConfiguration: () => ({ dispose: () => {} }),
+      openTextDocument: async (resource) => {
+        if (resource && resource.scheme === 'file') {
+          return { uri: resource, getText: () => '# Resolved from URI' };
+        }
+        throw new Error('Cannot open document');
+      },
     },
     commands: {
       registerCommand: (commandId, handler) => {
         registeredCommands.push(commandId);
+        commandHandlers[commandId] = handler;
         return { dispose: () => {} };
       },
     },
@@ -31,6 +39,23 @@ function createMockVsCode() {
     },
   };
 }
+
+test('resolveDocument returns a TextDocument unchanged and opens a resource URI', async () => {
+  const doc = { uri: { scheme: 'file', path: '/a.md' }, getText: () => 'x' };
+  const vscode = createMockVsCode();
+  const { resolveDocument } = await import('../src/activate.js');
+
+  const direct = await resolveDocument(vscode, doc);
+  assert.equal(direct, doc);
+
+  const uri = { scheme: 'file', path: '/b.md', toString: () => 'file:///b.md' };
+  const opened = await resolveDocument(vscode, uri);
+  assert.equal(opened.getText(), '# Resolved from URI');
+  assert.equal(opened.uri, uri);
+
+  const empty = await resolveDocument(vscode, undefined);
+  assert.equal(empty, undefined);
+});
 
 test('createExtension registers all 5 commands and webview panel serializer', () => {
   const vscode = createMockVsCode();

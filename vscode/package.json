@@ -57,6 +57,18 @@
           "command": "tocBuilder.screenshot",
           "group": "navigation"
         }
+      ],
+      "editor/context": [
+        {
+          "command": "tocBuilder.preview",
+          "group": "navigation",
+          "when": "resourceLangId == markdown"
+        },
+        {
+          "command": "tocBuilder.screenshot",
+          "group": "navigation",
+          "when": "resourceLangId == markdown"
+        }
       ]
     },
     "configuration": {
